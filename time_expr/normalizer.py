@@ -27,7 +27,7 @@ class TimeNormalizer:
         self.__pre_handling__()
         return self.__time_ex__(self.__target__, time_base)
     def __pre_handling__(self):
-        self.__target__ = prehandler.del_keyword(target, "\\s+")
-        self.__target__ = prehandler.del_keyword(target, "[的]+")
-        self.__target__ = prehandler.number_translator(target)
-    def __time_ex__(self, tar, timebase)
+        self.__target__ = prehandler.rm(self.__target__, r'\s+')
+        self.__target__ = prehandler.rm(self.__target__, u'的+')
+        self.__target__ = prehandler.number_translator(self.__target__)
+    def __time_ex__(self, tar, timebase):
