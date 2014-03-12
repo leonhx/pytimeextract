@@ -17,7 +17,12 @@ class TimeUnit:
         self._to_origin = TimePoint()
         self.__normalizer__ = n
         Time_Normalization()
-    def norm_setyear():
+    def __norm_set__(self, regex, idx):
+        pattern = re.compile(regex)
+        m = pattern.match(self.Time_Expression)
+        if m:
+            _tp.tunit[idx] = int(m.group())
+    def norm_setyear(self):
         pattern = re.compile(u'[0-9]{2}(?=年)')
         m = pattern.match(self.Time_Expression)
         if m:
@@ -28,266 +33,124 @@ class TimeUnit:
                 else:
                     _tp.tunit[0] += 1900
             return
-        pattern = re.compile(u'[0-9]?[0-9]{3}(?=年)')
+        self.__norm_set__(u'[0-9]?[0-9]{3}(?=年)', 0)
+    def norm_setmonth(self):
+        self.__norm_set__(u'((10)|(11)|(12)|([1-9]))(?=月)', 1)
+    def norm_setday(self):
+        self.__norm_set__(u'((?<!\\d))([0-3][0-9]|[1-9])(?=(日|号))', 2)
+    def norm_sethour(self):
+        self.__norm_set__(u'(?<!(周|星期))([0-2]?[0-9])(?=(点|时))', 3)
+
+        pattern = re.compile(u'(中午)|(午间)')
+        m = pattern.match(self.Time_Expression);
+        if m:
+            if _tp.tunit[3] >= 0 and _tp.tunit[3] <= 10:
+                _tp.tunit[3] += 12
+
+        pattern = re.compile(u'(下午)|(午后)|(pm)|(PM)')
+        m = pattern.match(self.Time_Expression);
+        if m:
+            if _tp.tunit[3] >= 0 and _tp.tunit[3] <= 11:
+                _tp.tunit[3] += 12
+
+        pattern = re.compile(u'晚');
+        m = pattern.match(self.Time_Expression);
+        if m:
+            if _tp.tunit[3] >= 1 and _tp.tunit[3] <= 11:
+                _tp.tunit[3] += 12
+            elif _tp.tunit[3] == 12:
+                _tp.tunit[3] = 0
+    def norm_setminute(self):
+        pattern = re.compile(u'([0-5]?[0-9](?=分(?!钟)))|((?<=((?<!小)[点时]))[0-5]?[0-9](?!刻))');
         m = pattern.match(self.Time_Expression)
         if m:
-            _tp.tunit[0] = int(m.group())
-    public void norm_setmonth()
-    {
-        String rule="((10)|(11)|(12)|([1-9]))(?=月)";
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            _tp.tunit[1]=Integer.parseInt(match.group());
-        }
-    }
-    public void norm_setday()
-    {
-        String rule="((?<!\\d))([0-3][0-9]|[1-9])(?=(日|号))";
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            _tp.tunit[2]=Integer.parseInt(match.group());
-        }
-    }
-    public void norm_sethour()
-    {
-        /*
-         * 清除只能识别11-99时的bug
-         * modified by 曹零
-         */
-        String rule="(?<!(周|星期))([0-2]?[0-9])(?=(点|时))";
+            if m.group():
+                _tp.tunit[4] = int(m.group())
 
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            _tp.tunit[3]=Integer.parseInt(match.group());
-        }
-        /*
-         * 对关键字：中午,午间,下午,午后,晚上,傍晚,晚间,晚,pm,PM的正确时间计算
-         * 规约：
-         * 1.中午/午间0-10点视为12-22点
-         * 2.下午/午后0-11点视为12-23点
-         * 3.晚上/傍晚/晚间/晚1-11点视为13-23点，12点视为0点
-         * 4.0-11点pm/PM视为12-23点
-         *
-         * add by 曹零
-         */
-        rule = "(中午)|(午间)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 0 && _tp.tunit[3] <= 10)
-                _tp.tunit[3] += 12;
-        }
+        pattern = re.compile(u'(?<=[点时])[1一]刻(?!钟)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            _tp.tunit[4] = 15
 
-        rule = "(下午)|(午后)|(pm)|(PM)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 0 && _tp.tunit[3] <= 11)
-                _tp.tunit[3] += 12;
-        }
+        pattern = re.compile(u'(?<=[点时])半')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            _tp.tunit[4] = 30
 
-        rule = "晚";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 1 && _tp.tunit[3] <= 11)
-                _tp.tunit[3] += 12;
-            else if(_tp.tunit[3] == 12)
-                _tp.tunit[3] = 0;
-        }
-    }
-    public void norm_setminute()
-    {
-        /*
-         * 添加了省略“分”说法的时间
-         * 如17点15
-         * modified by 曹零
-         */
-        String rule="([0-5]?[0-9](?=分(?!钟)))|((?<=((?<!小)[点时]))[0-5]?[0-9](?!刻))";
+        pattern = re.compile(u'(?<=[点时])[3三]刻(?!钟)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            _tp.tunit[4] = 45
+    def norm_setsecond(self):
+        self.__norm_set__(([0-5]?[0-9](?=秒))|((?<=分)[0-5]?[0-9]), 5)
+    def norm_setTotal(self):
+        pattern = re.compile(u'(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            tmp_target = m.group()
+            tmp_parser = tmp_target.split(':')
+            _tp.tunit[3] = int(tmp_parser[0])
+            _tp.tunit[4] = int(tmp_parser[1])
+            _tp.tunit[5] = int(tmp_parser[2])
+        else:
+            pattern = re.compile(u'(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]')
+            m = pattern.match(self.Time_Expression)
+            if m:
+                tmp_target = m.group()
+                tmp_parser = tmp_target.split(':')
+                _tp.tunit[3] = int(tmp_parser[0])
+                _tp.tunit[4] = int(tmp_parser[1])
 
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            if(match.group().equals("")){
+        pattern = re.compile(u'(中午)|(午间)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            if _tp.tunit[3] >= 0 and _tp.tunit[3] <= 10:
+                _tp.tunit[3] += 12
 
-            }
-            else
-            _tp.tunit[4]=Integer.parseInt(match.group());
-        }
-        /*
-         * 添加对一刻，半，3刻的正确识别（1刻为15分，半为30分，3刻为45分）
-         *
-         * add by 曹零
-         */
-        rule = "(?<=[点时])[1一]刻(?!钟)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            _tp.tunit[4] = 15;
-        }
+        pattern = re.compile(u'(下午)|(午后)|(pm)|(PM)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            if _tp.tunit[3] >= 0 and _tp.tunit[3] <= 11:
+                _tp.tunit[3] += 12
 
-        rule = "(?<=[点时])半";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            _tp.tunit[4] = 30;
-        }
+        pattern = re.compile(u'晚')
+        m = pattern.match(selfTime_Expression)
+        if m:
+            if _tp.tunit[3] >= 1 and _tp.tunit[3] <= 11:
+                _tp.tunit[3] += 12
+            elif _tp.tunit[3] == 12:
+                _tp.tunit[3] = 0
 
-        rule = "(?<=[点时])[3三]刻(?!钟)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            _tp.tunit[4] = 45;
-        }
+        pattern = re.compile('[0-9]?[0-9]?[0-9]{2}-((10)|(11)|(12)|([1-9]))-((?<!\\d))([0-3][0-9]|[1-9])');
+        m = pattern.match(self.Time_Expression)
+        if m:
+            tmp_target = m.group()
+            tmp_parser = tmp_target.split('-')
+            _tp.tunit[0] = int(tmp_parser[0])
+            _tp.tunit[1] = int(tmp_parser[1])
+            _tp.tunit[2] = int(tmp_parser[2])
 
-    }
-    public void norm_setsecond()
-    {
-        /*
-         * 添加了省略“分”说法的时间
-         * 如17点15分32
-         * modified by 曹零
-         */
-        String rule="([0-5]?[0-9](?=秒))|((?<=分)[0-5]?[0-9])";
+        pattern = re.compile('((10)|(11)|(12)|([1-9]))/((?<!\\d))([0-3][0-9]|[1-9])/[0-9]?[0-9]?[0-9]{2}')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            tmp_target = m.group()
+            tmp_parser = tmp_target.split('/')
+            _tp.tunit[1] = int(tmp_parser[0])
+            _tp.tunit[2] = int(tmp_parser[1])
+            _tp.tunit[0] = int(tmp_parser[2])
 
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            _tp.tunit[5]=Integer.parseInt(match.group());
-        }
-    }
-    public void norm_setTotal()
-    {
-        String rule;
-        Pattern pattern;
-        Matcher match;
-        String[] tmp_parser;
-        String tmp_target;
-
-        /*
-         * 修改了函数中所有的匹配规则使之更为严格
-         * modified by 曹零
-         */
-        rule="(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            tmp_parser=new String[3];
-            tmp_target=match.group();
-            tmp_parser=tmp_target.split(":");
-            _tp.tunit[3]=Integer.parseInt(tmp_parser[0]);
-            _tp.tunit[4]=Integer.parseInt(tmp_parser[1]);
-            _tp.tunit[5]=Integer.parseInt(tmp_parser[2]);
-        }
-        /*
-         * 添加了省略秒的:固定形式的时间规则匹配
-         * add by 曹零
-         */
-        else{
-            rule="(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]";
-            pattern=Pattern.compile(rule);
-            match=pattern.matcher(Time_Expression);
-            if(match.find())
-            {
-                tmp_parser=new String[2];
-                tmp_target=match.group();
-                tmp_parser=tmp_target.split(":");
-                _tp.tunit[3]=Integer.parseInt(tmp_parser[0]);
-                _tp.tunit[4]=Integer.parseInt(tmp_parser[1]);
-            }
-        }
-        /*
-         * 增加了:固定形式时间表达式的
-         * 中午,午间,下午,午后,晚上,傍晚,晚间,晚,pm,PM
-         * 的正确时间计算，规约同上
-         * add by 曹零
-         */
-        rule = "(中午)|(午间)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 0 && _tp.tunit[3] <= 10)
-                _tp.tunit[3] += 12;
-        }
-
-        rule = "(下午)|(午后)|(pm)|(PM)";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 0 && _tp.tunit[3] <= 11)
-                _tp.tunit[3] += 12;
-        }
-
-        rule = "晚";
-        pattern = Pattern.compile(rule);
-        match = pattern.matcher(Time_Expression);
-        if(match.find()){
-            if(_tp.tunit[3] >= 1 && _tp.tunit[3] <= 11)
-                _tp.tunit[3] += 12;
-            else if(_tp.tunit[3] == 12)
-                _tp.tunit[3] = 0;
-        }
-
-
-        rule="[0-9]?[0-9]?[0-9]{2}-((10)|(11)|(12)|([1-9]))-((?<!\\d))([0-3][0-9]|[1-9])";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            tmp_parser=new String[3];
-            tmp_target=match.group();
-            tmp_parser=tmp_target.split("-");
-            _tp.tunit[0]=Integer.parseInt(tmp_parser[0]);
-            _tp.tunit[1]=Integer.parseInt(tmp_parser[1]);
-            _tp.tunit[2]=Integer.parseInt(tmp_parser[2]);
-        }
-
-        rule="((10)|(11)|(12)|([1-9]))/((?<!\\d))([0-3][0-9]|[1-9])/[0-9]?[0-9]?[0-9]{2}";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            tmp_parser=new String[3];
-            tmp_target=match.group();
-            tmp_parser=tmp_target.split("/");
-            _tp.tunit[1]=Integer.parseInt(tmp_parser[0]);
-            _tp.tunit[2]=Integer.parseInt(tmp_parser[1]);
-            _tp.tunit[0]=Integer.parseInt(tmp_parser[2]);
-        }
-
-        /*
-         * 增加了:固定形式时间表达式 年.月.日 的正确识别
-         * add by 曹零
-         */
-        rule="[0-9]?[0-9]?[0-9]{2}\\.((10)|(11)|(12)|([1-9]))\\.((?<!\\d))([0-3][0-9]|[1-9])";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            tmp_parser=new String[3];
-            tmp_target=match.group();
-            tmp_parser=tmp_target.split("\\.");
-            _tp.tunit[0]=Integer.parseInt(tmp_parser[0]);
-            _tp.tunit[1]=Integer.parseInt(tmp_parser[1]);
-            _tp.tunit[2]=Integer.parseInt(tmp_parser[2]);
-        }
-    }
-    public void norm_setBaseRelated(){
-        String [] time_grid=new String[6];
-        time_grid=normalizer.getTimeBase().split("-");
-        int[] ini = new int[6];
-        for(int i = 0 ; i < 6; i++)
-            ini[i] = Integer.parseInt(time_grid[i]);
-
+        pattern = re.compile('[0-9]?[0-9]?[0-9]{2}\\.((10)|(11)|(12)|([1-9]))\\.((?<!\\d))([0-3][0-9]|[1-9])')
+        m = pattern.matcher(self.Time_Expression)
+        if m:
+            tmp_target = match.group()
+            tmp_parser = tmp_target.split('.')
+            _tp.tunit[0] = int(tmp_parser[0])
+            _tp.tunit[1] = int(tmp_parser[1])
+            _tp.tunit[2] = int(tmp_parser[2])
+    def norm_setBaseRelated(self):
+        time_grid = self.__normalizer__.__time_base__.split('-')
+        ini = [int(i) for i in time_grid]
+        //TODO
         Calendar calendar = Calendar.getInstance();
         calendar.setFirstDayOfWeek(Calendar.MONDAY);
         calendar.set(ini[0], ini[1]-1, ini[2], ini[3], ini[4], ini[5]);
