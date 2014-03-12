@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding:utf-8
+# coding: utf-8
 
 import re
 
@@ -8,114 +8,93 @@ def rm(target, pattern):
     return re.sub(pattern, '', target)
 
 def number_translator(target):
-    pattern = re.compile(u'[一二两三四五六七八九123456789]万[一二两三四五六七八九123456789](?!(千|百|十))')
-    m = re.match(pattern, target)
-    s = ''
+    def num_han(base):
+        def get_num(s):
+            num = 0
+            if len(s) == 2:
+                num += __word2num__(s[0])*10*base + __word2num__(s[1])*base
+            return num
+        return get_num
 
-CN_NUM = {
-u'〇' : 0,
-u'一' : 1,
-u'二' : 2,
-u'三' : 3,
-u'四' : 4,
-u'五' : 5,
-u'六' : 6,
-u'七' : 7,
-u'八' : 8,
-u'九' : 9,
+    target = __num__(target, u'[一二两三四五六七八九123456789]万[一二两三四五六七八九123456789](?!(千|百|十))', u'万', num_han(1000))
+    target = __num__(target, u'[一二两三四五六七八九123456789]千[一二两三四五六七八九123456789](?!(百|十))', u'千', num_han(100))
+    target = __num__(target, u'[一二两三四五六七八九123456789]百[一二两三四五六七八九123456789](?!十)', u'百', num_han(10))
+    target = __num0__(target, u'[零一二两三四五六七八九]')
+    target = __num0__(target, u'(?<=周)[天日]|(?<=星期)[天日]')
 
-u'零' : 0,
-u'壹' : 1,
-u'贰' : 2,
-u'叁' : 3,
-u'肆' : 4,
-u'伍' : 5,
-u'陆' : 6,
-u'柒' : 7,
-u'捌' : 8,
-u'玖' : 9,
+    def num_digit(base):
+        def get_num(s):
+            num = 0
+            if len(s) == 0:
+                num += base
+            elif len(s) == 1:
+                coef = int(s[0])
+                if coef == 0:
+                    num += base
+                else:
+                    num += coef * base
+            elif len(s) == 2:
+                if s[0] == '':
+                    num += base
+                else:
+                    coef = int(s[0])
+                    if coef == 0:
+                        num += base
+                    else:
+                        num += coef * base
+                if s[1] != '':
+                    num += int(s[1])
+            return num
+        return get_num
 
-u'貮' : 2,
-u'两' : 2,
-}
-CN_UNIT = {
-u'十' : 10,
-u'拾' : 10,
-u'百' : 100,
-u'佰' : 100,
-u'千' : 1000,
-u'仟' : 1000,
-u'万' : 10000,
-u'萬' : 10000,
-u'亿' : 100000000,
-u'億' : 100000000,
-u'兆' : 1000000000000,
-}
-def cn2dig(cn):
-    lcn = list(cn)
-    unit = 0 #当前的单位
-    ldig = []#临时数组
-    while lcn:
-        cndig = lcn.pop()
-        if CN_UNIT.has_key(cndig):
-            unit = CN_UNIT.get(cndig)
-            if unit==10000:
-                ldig.append('w')    #标示万位
-                unit = 1
-            elif unit==100000000:
-                ldig.append('y')    #标示亿位
-                unit = 1
-            elif unit==1000000000000:#标示兆位
-                ldig.append('z')
-                unit = 1
-            continue
-        else:
-            dig = CN_NUM.get(cndig)
-            if unit:
-                dig = dig*unit
-                unit = 0
-            ldig.append(dig)
-    if unit==10:    #处理10-19的数字
-        ldig.append(10)
-    #print ldig #uncomment this line to watch the middle var.
-    ret = 0
-    tmp = 0
-    while ldig:
-        x = ldig.pop()
-        if x=='w':
-            tmp *= 10000
-            ret += tmp
-            tmp=0
-        elif x=='y':
-            tmp *= 100000000
-            ret += tmp
-            tmp=0
-        elif x=='z':
-            tmp *= 1000000000000
-            ret += tmp
-            tmp=0
-        else:
-            tmp += x
-    ret += tmp
-    return ret
-    #ldig.reverse()
-    #print ldig
-    #print CN_NUM[u'七']
+    target = __num__(target, u'(?<!周)0?[0-9]?十[0-9]?|(?<!星期)0?[0-9]?十[0-9]?', u'十', num_digit(10))
+    target = __num__(target, u'0?[1-9]百[0-9]?[0-9]?', u'百', num_digit(100))
+    target = __num__(target, u'0?[1-9]千[0-9]?[0-9]?[0-9]?', u'千', num_digit(1000))
+    target = __num__(target, u'[0-9]+万[0-9]?[0-9]?[0-9]?[0-9]?', u'万', num_digit(10000))
+
+    return target
+
+def __num__(target, regex, unit, get_num):
+    pattern = re.compile(regex)
+    res = u''
+    m = pattern.search(target)
+    while m:
+        group = m.group()
+        s = group.split(unit)
+        res += target[:m.start()] + str(get_num(s))
+        target = target[m.end():]
+        m = pattern.search(target)
+    res += target
+    return res
+
+def __num0__(target, regex):
+    pattern = re.compile(regex)
+    res = u''
+    m = pattern.search(target)
+    while m:
+        res += target[:m.start()] + str(__word2num__(m.group()))
+        target = target[m.end():]
+        m = pattern.search(target)
+    res += target
+    return res
+
+def __word2num__(s):
+    word_num_dict = {
+        u'零': 0, '0': 0, '': 0,
+        u'一': 1, '1': 1,
+        u'二': 2, u'两': 2, '2': 2,
+        u'三': 3, '3': 3,
+        u'四': 4, '4': 4,
+        u'五': 5, '5': 5,
+        u'六': 6, '6': 6,
+        u'七': 7, u'天': 7, u'日': 7, '7': 7,
+        u'八': 8, '8': 8,
+        u'九': 9, '9': 9,
+    }
+    return word_num_dict.get(s, -1)
 
 if __name__ == '__main__':
-    #just for test
-    test_dig = [u'九',
-                u'十一',
-                u'一百二十三',
-                u'一千二百零三',
-                u'一万一千一百零一',
-                u'十万零三千六百零九',
-                u'一百二十三万四千五百六十七',
-                u'一千一百二十三万四千五百六十七',
-                u'一亿一千一百二十三万四千五百六十七',
-                u'一百零二亿五千零一万零一千零三十八',
-                u'一千一百一十一亿一千一百二十三万四千五百六十七',
-                u'一兆一千一百一十一亿一千一百二十三万四千五百六十七',
-                ]
-    for cn in test_dig:
-        print cn2dig(cn)
+    t1 = u'一千三百五十二年以前'
+    t2 = u'两千零二年'
+    print number_translator(t1)
+    print number_translator(t2)
