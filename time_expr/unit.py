@@ -2,6 +2,7 @@
 # coding:utf-8
 
 import re
+import datetime
 
 from normalizer import TimeNormalizer
 
@@ -150,250 +151,167 @@ class TimeUnit:
     def norm_setBaseRelated(self):
         time_grid = self.__normalizer__.__time_base__.split('-')
         ini = [int(i) for i in time_grid]
-        //TODO
-        Calendar calendar = Calendar.getInstance();
-        calendar.setFirstDayOfWeek(Calendar.MONDAY);
-        calendar.set(ini[0], ini[1]-1, ini[2], ini[3], ini[4], ini[5]);
-        calendar.getTime();
 
-        boolean[] flag = {false,false,false};//观察时间表达式是否因当前相关时间表达式而改变时间
+        calendar = datetime.datetime(*ini)
 
+        flag = [False, False, False]
 
-        String rule="\\d+(?=天[以之]?前)";
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            int day = Integer.parseInt(match.group());
-            calendar.add(Calendar.DATE, -day);
-        }
+        pattern = re.compile(u'\\d+(?=天[以之]?前)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            day = datetime.timedelta(int(match.group()))
+            calendar -= day
 
-        rule="\\d+(?=天[以之]?后)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            int day = Integer.parseInt(match.group());
-            calendar.add(Calendar.DATE, day);
-        }
+        pattern = re.compile(u'\\d+(?=天[以之]?后)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            day = datetime.timedelta(int(match.group()))
+            calendar += day
 
-        rule="\\d+(?=(个)?月[以之]?前)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[1] = true;
-            int month = Integer.parseInt(match.group());
-            calendar.add(Calendar.MONTH, -month);
-        }
+        pattern = re.compile(u'\\d+(?=(个)?月[以之]?前)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[1] = True
+            month = int(match.group())
+            calendar = datetime.datetime(calendar.year, calendar.month-month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="\\d+(?=(个)?月[以之]?后)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[1] = true;
-            int month = Integer.parseInt(match.group());
-            calendar.add(Calendar.MONTH, month);
-        }
+        pattern = re.compile(u'\\d+(?=(个)?月[以之]?后)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[1] = True
+            month = int(match.group())
+            calendar = datetime.datetime(calendar.year, calendar.month+month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="\\d+(?=年[以之]?前)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            int year = Integer.parseInt(match.group());
-            calendar.add(Calendar.YEAR, -year);
-        }
+        pattern = re.compile(u'\\d+(?=年[以之]?前)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            year = int(match.group())
+            calendar = datetime.datetime(calendar.year-year, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="\\d+(?=年[以之]?后)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            int year = Integer.parseInt(match.group());
-            calendar.add(Calendar.YEAR, year);
-        }
+        pattern = re.compile(u'\\d+(?=年[以之]?后)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            year = int(match.group())
+            calendar = datetime.datetime(calendar.year+year, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        String s = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(calendar.getTime());
-        String[] time_fin = s.split("-");
-        if(flag[0]||flag[1]||flag[2]){
-            _tp.tunit[0] = Integer.parseInt(time_fin[0]);
-        }
-        if(flag[1]||flag[2])
-            _tp.tunit[1] = Integer.parseInt(time_fin[1]);
-        if(flag[2])
-            _tp.tunit[2] = Integer.parseInt(time_fin[2]);
-    }
-    public void norm_setCurRelated(){
-        String [] time_grid=new String[6];
-        time_grid=normalizer.getOldTimeBase().split("-");
-        int[] ini = new int[6];
-        for(int i = 0 ; i < 6; i++)
-            ini[i] = Integer.parseInt(time_grid[i]);
+        s = calendar.strftime('%Y-%m-%d-%H-%M-%S')
+        time_fin = s.split('-')
+        if any(flag):
+            _tp.tunit[0] = int(time_fin[0])
+        if any(flag[:2])
+            _tp.tunit[1] = int(time_fin[1])
+        if flag[2]:
+            _tp.tunit[2] = int(time_fin[2])
+    def norm_setCurRelated(self):
+        time_grid = self.__normalizer__.__old_time_base__.split('-')
+        ini = [int(i) for i in time_grid]
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setFirstDayOfWeek(Calendar.MONDAY);
-        calendar.set(ini[0], ini[1]-1, ini[2], ini[3], ini[4], ini[5]);
-        calendar.getTime();
+        calendar = datetime.datetime(*ini)
 
-        boolean[] flag = {false,false,false};//观察时间表达式是否因当前相关时间表达式而改变时间
+        flag = [False, False, False]
 
-        String rule="前年";
-        Pattern pattern=Pattern.compile(rule);
-        Matcher match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            calendar.add(Calendar.YEAR, -2);
-        }
+        pattern = re.compile(u'前年')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            calendar = datetime.datetime(calendar.year-2, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="去年";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            calendar.add(Calendar.YEAR, -1);
-        }
+        pattern = re.compile(u'去年')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            calendar = datetime.datetime(calendar.year-1, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="今年";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            calendar.add(Calendar.YEAR, 0);
-        }
+        pattern = re.compile(u'今年')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            calendar = datetime.datetime(datetime.datetime.now().year, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="明年";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            calendar.add(Calendar.YEAR, 1);
-        }
+        pattern = re.compile(u'明年')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            calendar = datetime.datetime(calendar.year+1, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="后年";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[0] = true;
-            calendar.add(Calendar.YEAR, 2);
-        }
+        pattern = re.compile(u'后年')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[0] = True
+            calendar = datetime.datetime(calendar.year+2, calendar.month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="上(个)?月";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[1] = true;
-            calendar.add(Calendar.MONTH, -1);
+        pattern = re.compile(u'上(个)?月')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[1] = True
+            calendar = datetime.datetime(calendar.year, calendar.month-1, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        }
+        pattern = re.compile(u'(本|这个)月')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[1] = True
+            calendar = datetime.datetime(calendar.year, datetime.datetime.now().month, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="(本|这个)月";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[1] = true;
-            calendar.add(Calendar.MONTH, 0);
-        }
+        pattern = re.compile(u'下(个)?月')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[1] = True
+            calendar = datetime.datetime(calendar.year, calendar.month+1, calendar.day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="下(个)?月";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[1] = true;
-            calendar.add(Calendar.MONTH, 1);
-        }
+        pattern = re.compile(u'大前天')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar -= datetime.timedelta(3)
 
-        rule="大前天";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, -3);
-        }
+        pattern = re.compile(u'(?<!大)前天')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar -= datetime.timedelta(2)
 
-        rule="(?<!大)前天";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, -2);
-        }
+        pattern = re.compile(u'昨')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar -= datetime.timedelta(1)
 
-        rule="昨";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, -1);
-        }
+        pattern = re.compile(u'今(?!年)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar = datetime.datetime(calendar.year, calendar.month, datetime.datetime.now().day, calendar.hour, calendar.minute, calendar.second)
 
-        rule="今(?!年)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, 0);
-        }
+        pattern = re.compile(u'明(?!年)')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar += datetime.timedelta(1)
 
-        rule="明(?!年)";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, 1);
-        }
+        pattern = re.compile(u'(?<!大)后天')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar += datetime.timedelta(2)
 
-        rule="(?<!大)后天";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, 2);
-        }
+        pattern = re.compile(u'大后天')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar += datetime.timedelta(3)
 
-        rule="大后天";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            calendar.add(Calendar.DATE, 3);
-        }
+        pattern = re.compile(u'(?<=(上上(周|星期)))[1-7]')
+        m = pattern.match(self.Time_Expression)
+        if m:
+            flag[2] = True
+            calendar -= datetime.timedelta(14+calendar.weekday()-int(match.group()))
 
-        rule="(?<=(上上(周|星期)))[1-7]";
-        pattern=Pattern.compile(rule);
-        match=pattern.matcher(Time_Expression);
-        if(match.find())
-        {
-            flag[2] = true;
-            int week = Integer.parseInt(match.group());
-            if(week == 7)
-                week = 1;
-            else
-                week++;
-            calendar.add(Calendar.WEEK_OF_MONTH, -2);
-            calendar.set(Calendar.DAY_OF_WEEK, week);
-        }
-
+        ######## TODO
+        ######## TODO
         rule="(?<=((?<!上)上(周|星期)))[1-7]";
         pattern=Pattern.compile(rule);
         match=pattern.matcher(Time_Expression);
