@@ -4,7 +4,7 @@
 from time_expr import normalizer, unit
 
 def time_expr_extract(time_expr):
-    norm = normalizer.TimeNormalizer('./model/TimeExp.m')
+    norm = normalizer.TimeNormalizer()
     norm.parse(time_expr)
     unit = norm.getTimeUnit()
     return unit

@@ -4,6 +4,7 @@
 import datetime
 
 import prehandler
+import pattern
 from unit import TimeUnit
 
 class ReadModelError(Exception):
@@ -13,14 +14,8 @@ class ReadModelError(Exception):
         return 'cannot read model from `%s`' % path
 
 class TimeNormalizer:
-    def __init__(self, filename):
-        if self.__patterns__ = null:
-            try:
-                self.__patterns__ = self.__readModel__(filename)
-            except Exception:
-                raise ReadModelError(filename)
-    def __read_model__(self, file):
-        pass # read a compiled regex
+    def __init__(self):
+        self.__patterns__ = pattern.p
     def parse(self, target, time_base=datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')):
         self.__target__ = target
         self.__time_base__ = time_base
