@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import re
+
 o = [
     u'[前昨今明后][天日]?[早晚][晨上间]?',
     u'\\d+个?[年月日天][以之]?[前后]',

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import sys, os
+sys.path.append(os.path.abspath('./time_expr'))
+sys.path.append(os.path.abspath('./model'))
+
 import datetime
 
 import prehandler
@@ -27,30 +31,17 @@ class TimeNormalizer:
         self.__target__ = prehandler.rm(self.__target__, u'的+')
         self.__target__ = prehandler.number_translator(self.__target__)
     def __time_ex__(self, tar, timebase):
-        startline = endline = -1
         temp = []
-        rpointer = 0
 
         m = self.__patterns__.match(tar)
-        startmark = True
         while m:
-            startline = m.start()
-            if endline == startline:
-                rpointer -= 1
-                temp[rpointer] = temp[rpointer] + m.group()
+            if m.start() == 0 and temp:
+                temp[-1] = temp[-1] + m.group()
             else:
-                if not startmark:
-                    rpointer -= 1
-                    # print temp[rpointer]
-                    rpointer += 1
                 startmark = False
-                temp[rpointer] = m.group()
-            endline = m.end()
-            rpointer += 1
-
-        if rpointer > 0:
-            rpointer -= 1
-            # print temp[rpointer]
-            rpointer += 1
+                temp.append(m.group())
+            tar = tar[m.end():]
+            m = self.__patterns__.match(tar)
 
         Time_Result = [TimeUnit(t, self) for t in temp]
+        return Time_Result
