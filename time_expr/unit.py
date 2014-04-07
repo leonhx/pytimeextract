@@ -24,7 +24,7 @@ class TimeUnit:
         self.time_origin = None
         self.Time_Normalization()
     def __str__(self):
-        return self.Time_Expression + u' --> ' + self.Time_Norm
+        return self.Time_Norm
     def __norm_set__(self, regex, idx):
         pattern = re.compile(regex, re.UNICODE)
         m = pattern.search(self.Time_Expression)
