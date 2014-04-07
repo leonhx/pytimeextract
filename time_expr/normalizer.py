@@ -33,7 +33,7 @@ class TimeNormalizer:
     def __time_ex__(self, tar, timebase):
         temp = []
 
-        m = self.__patterns__.match(tar)
+        m = self.__patterns__.search(tar)
         while m:
             if m.start() == 0 and temp:
                 temp[-1] = temp[-1] + m.group()
@@ -41,7 +41,7 @@ class TimeNormalizer:
                 startmark = False
                 temp.append(m.group())
             tar = tar[m.end():]
-            m = self.__patterns__.match(tar)
+            m = self.__patterns__.search(tar)
 
         Time_Result = [TimeUnit(t, self) for t in temp]
         return Time_Result

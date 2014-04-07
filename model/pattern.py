@@ -335,4 +335,4 @@ o = [
     '\d+-\d+-\d+|[0-9]{8}',
 ]
 
-p = re.compile('|'.join(o))
+p = re.compile('|'.join(o), re.UNICODE)

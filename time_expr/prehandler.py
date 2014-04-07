@@ -4,7 +4,7 @@
 import re
 
 def rm(target, pattern):
-    pattern = re.compile(pattern)
+    pattern = re.compile(pattern, re.UNICODE)
     return re.sub(pattern, '', target)
 
 def number_translator(target):
@@ -55,7 +55,7 @@ def number_translator(target):
     return target
 
 def __num__(target, regex, unit, get_num):
-    pattern = re.compile(regex)
+    pattern = re.compile(regex, re.UNICODE)
     res = u''
     m = pattern.search(target)
     while m:
@@ -68,7 +68,7 @@ def __num__(target, regex, unit, get_num):
     return res
 
 def __num0__(target, regex):
-    pattern = re.compile(regex)
+    pattern = re.compile(regex, re.UNICODE)
     res = u''
     m = pattern.search(target)
     while m:
