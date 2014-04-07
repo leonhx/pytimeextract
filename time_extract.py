@@ -11,7 +11,6 @@ def time_expr_extract(time_expr):
     return norm.parse(time_expr)
 
 if __name__ == '__main__':
-    req = u'明天下午三点过来一下，后天上午10点我有点事情'
-    time_exps = time_expr_extract(req)
+    time_exps = time_expr_extract(sys.argv[1].decode('gbk'))
     if time_exps:
         print(time_exps[0])
